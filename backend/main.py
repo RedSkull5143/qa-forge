@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from jira_service import get_jira_ticket
+from groq_service import generate_test_cases
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -29,6 +30,20 @@ async def health_check():
 async def get_jira_ticket_endpoint(ticket_id: str):
     return get_jira_ticket(ticket_id)
 
+@app.post("/api/generate/{ticket_id}")
+async def generate_tests_from_jira(ticket_id: str):
+    # 1. Fetch the data from Jira using the function
+    jira_data = get_jira_ticket(ticket_id)
+    
+    # Optional safety check!
+    if "error" in jira_data:
+        return jira_data 
+
+    # 2. Pass that raw Jira data directly into the AI Brain
+    ai_test_cases = generate_test_cases(jira_data)
+    
+    # 3. Return the AI's JSON back to the browser!
+    return ai_test_cases
 
 # This block allows us to run the server directly if needed
 if __name__ == "__main__":
