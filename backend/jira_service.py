@@ -76,7 +76,100 @@ def create_jira_subtask(parent_ticket_id: str, test_case: dict) -> dict:
                 f"Preconditions: {test_case['preconditions']}\n\n"
                 f"Expected: {', '.join(test_case['expected_results'])}"
             ),
-            "issuetype": {"name": "Sub-task"}
+            "issuetype": {"id": "10006"}
+        }
+    }
+
+    try:
+        response = requests.post(url, headers=headers, auth=auth, json=payload)
+        if response.status_code == 201:
+            return response.json()
+        else:
+            return {"error": f"Failed to push to Jira: {response.status_code} - {response.text}"}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Network error while pushing to Jira: {str(e)}"}
+
+def get_valid_issue_types(project_key: str) -> list:
+    url = f"{JIRA_BASE_URL}/rest/api/3/project/{project_key}"
+    auth = HTTPBasicAuth(JIRA_EMAIL, JIRA_API_TOKEN)
+    headers = {"Accept": "application/json"}
+
+    response = requests.get(url, headers=headers, auth=auth)
+    data = response.json()
+
+    issue_types = []
+    for issue_type in data.get("issueTypes", []):
+        issue_types.append({
+            "id": issue_type["id"],
+            "name": issue_type["name"],
+            "subtask": issue_type.get("subtask", False)
+        })
+        print(f"  id: {issue_type['id']}  |  name: '{issue_type['name']}'  |  subtask: {issue_type.get('subtask')}")
+
+    return issue_types
+
+def create_jira_subtask1(parent_ticket_id: str, test_case: dict) -> dict:
+    url = f"{JIRA_BASE_URL}/rest/api/3/issue"
+    auth = HTTPBasicAuth(JIRA_EMAIL, JIRA_API_TOKEN)
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+
+    # ✅ Safely convert lists to readable strings
+    steps = test_case.get("steps", [])
+    steps_text = "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps)) if isinstance(steps, list) else str(steps)
+
+    expected = test_case.get("expected_results", [])
+    expected_text = "\n".join(f"• {e}" for e in expected) if isinstance(expected, list) else str(expected)
+
+    payload = {
+        "fields": {
+            "project": {"key": parent_ticket_id.split("-")[0]},
+            "parent": {"key": parent_ticket_id},
+            "summary": f"[QA] {test_case['title']}",
+            "description": {
+                "version": 1,
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {"type": "text", "text": "Type: ", "marks": [{"type": "strong"}]},
+                            {"type": "text", "text": str(test_case.get("type", ""))}
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {"type": "text", "text": "Preconditions: ", "marks": [{"type": "strong"}]},
+                            {"type": "text", "text": str(test_case.get("preconditions", ""))}
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {"type": "text", "text": "Steps: ", "marks": [{"type": "strong"}]},
+                            {"type": "text", "text": steps_text}
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {"type": "text", "text": "Expected Results: ", "marks": [{"type": "strong"}]},
+                            {"type": "text", "text": expected_text}
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {"type": "text", "text": "Priority: ", "marks": [{"type": "strong"}]},
+                            {"type": "text", "text": str(test_case.get("priority", "Medium"))}
+                        ]
+                    }
+                ]
+            },
+            "issuetype": {"id": "10006"}
         }
     }
 

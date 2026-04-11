@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from typing import List
+from schemas import TestCase, TestcaseGenerationResponse
 from fastapi.middleware.cors import CORSMiddleware
-from jira_service import get_jira_ticket, create_jira_subtask
+from jira_service import get_jira_ticket, create_jira_subtask, create_jira_subtask1
 from groq_service import generate_test_cases
 
 # Initialize the FastAPI application
@@ -46,12 +48,14 @@ async def generate_tests_from_jira(ticket_id: str):
     return ai_test_cases
 
 @app.post("/api/push/{ticket_id}")
-async def push_tests_to_jira(ticket_id: str, test_cases: list):
+async def push_tests_to_jira(ticket_id: str, payload: TestcaseGenerationResponse):
     results = []
-    for tc in test_cases:
-        result = create_jira_subtask(ticket_id, tc)
+    for tc in payload.test_cases:
+        # Pydantic models need to be converted to dicts before we send them to our Jira function
+        result = create_jira_subtask1(ticket_id, tc.model_dump())
         results.append(result)
     return {"pushed": len(results), "results": results}
+
 
 
 # This block allows us to run the server directly if needed
