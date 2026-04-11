@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from jira_service import get_jira_ticket
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -23,6 +24,11 @@ app.add_middleware(
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "qa-forge-api"}
+
+@app.get("/api/jira/{ticket_id}")
+async def get_jira_ticket_endpoint(ticket_id: str):
+    return get_jira_ticket(ticket_id)
+
 
 # This block allows us to run the server directly if needed
 if __name__ == "__main__":
