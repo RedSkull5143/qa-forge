@@ -4,3 +4,5 @@ groq
 requests
 python-dotenv
 pydantic
+pandas
+openpyxl

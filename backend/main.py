@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from typing import List
 from schemas import TestCase, TestcaseGenerationResponse
 from fastapi.middleware.cors import CORSMiddleware
-from jira_service import get_jira_ticket, create_jira_subtask, create_jira_subtask1
+from jira_service import get_jira_ticket, create_jira_subtask, create_jira_subtask1, attach_file_to_jira
 from groq_service import generate_test_cases
+from excel_service import generate_excel_from_test_cases
+
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -56,6 +58,15 @@ async def push_tests_to_jira(ticket_id: str, payload: TestcaseGenerationResponse
         results.append(result)
     return {"pushed": len(results), "results": results}
 
+@app.post("/api/push-excel/{ticket_id}")
+async def push_excel_to_jira(ticket_id: str, payload: TestcaseGenerationResponse):
+    # 1. Generate the Excel bytes
+    excel_data = generate_excel_from_test_cases(payload.test_cases)
+    # 2. Give it a proper filename (Atlassian needs this)
+    filename = f"QA_Forge_Tests_{ticket_id}.xlsx"
+    # 3. Call the attachment function with ALL 3 arguments
+    result = attach_file_to_jira(ticket_id, excel_data, filename)
+    return result
 
 
 # This block allows us to run the server directly if needed

@@ -181,3 +181,29 @@ def create_jira_subtask1(parent_ticket_id: str, test_case: dict) -> dict:
             return {"error": f"Failed to push to Jira: {response.status_code} - {response.text}"}
     except requests.exceptions.RequestException as e:
         return {"error": f"Network error while pushing to Jira: {str(e)}"}
+
+def attach_file_to_jira(ticket_id: str, file_content: bytes, filename: str) -> dict:
+    """
+    Attaches a file (like an Excel sheet) directly to a Jira ticket.
+    """
+    url = f"{JIRA_BASE_URL}/rest/api/3/issue/{ticket_id}/attachments"
+    auth = HTTPBasicAuth(JIRA_EMAIL, JIRA_API_TOKEN)
+    
+    # Jira requires this specific header for file uploads
+    headers = {
+        "X-Atlassian-Token": "no-check",
+        "Accept": "application/json"
+    }
+
+    # Format the file for the multipart/form-data request
+    files = {
+        "file": (filename, file_content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    }
+
+    try:
+        response = requests.post(url, headers=headers, auth=auth, files=files)
+        if response.status_code == 200:
+            return {"status": "success", "data": response.json()}
+        return {"error": f"Failed to attach file: {response.status_code} - {response.text}"}
+    except Exception as e:
+        return {"error": str(e)}
