@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from typing import List
+import os
 from schemas import TestCase, TestcaseGenerationResponse
 from fastapi.middleware.cors import CORSMiddleware
 from jira_service import get_jira_ticket, create_jira_subtask, create_jira_subtask1, attach_file_to_jira
 from groq_service import generate_test_cases
 from excel_service import generate_excel_from_test_cases
+
+from auth import get_current_user
 
 
 # Initialize the FastAPI application
@@ -31,11 +34,11 @@ async def health_check():
     return {"status": "healthy", "service": "qa-forge-api"}
 
 @app.get("/api/jira/{ticket_id}")
-async def get_jira_ticket_endpoint(ticket_id: str):
+async def get_jira_ticket_endpoint(ticket_id: str, user: dict = Depends(get_current_user)):
     return get_jira_ticket(ticket_id)
 
 @app.post("/api/generate/{ticket_id}")
-async def generate_tests_from_jira(ticket_id: str):
+async def generate_tests_from_jira(ticket_id: str, user: dict = Depends(get_current_user)):
     # 1. Fetch the data from Jira using the function
     jira_data = get_jira_ticket(ticket_id)
     
@@ -50,7 +53,7 @@ async def generate_tests_from_jira(ticket_id: str):
     return ai_test_cases
 
 @app.post("/api/push/{ticket_id}")
-async def push_tests_to_jira(ticket_id: str, payload: TestcaseGenerationResponse):
+async def push_tests_to_jira(ticket_id: str, payload: TestcaseGenerationResponse, user: dict = Depends(get_current_user)):
     results = []
     for tc in payload.test_cases:
         # Pydantic models need to be converted to dicts before we send them to our Jira function
@@ -59,7 +62,7 @@ async def push_tests_to_jira(ticket_id: str, payload: TestcaseGenerationResponse
     return {"pushed": len(results), "results": results}
 
 @app.post("/api/push-excel/{ticket_id}")
-async def push_excel_to_jira(ticket_id: str, payload: TestcaseGenerationResponse):
+async def push_excel_to_jira(ticket_id: str, payload: TestcaseGenerationResponse, user: dict = Depends(get_current_user)):
     # 1. Generate the Excel bytes
     excel_data = generate_excel_from_test_cases(payload.test_cases)
     # 2. Give it a proper filename (Atlassian needs this)
