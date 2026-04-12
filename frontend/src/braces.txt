@@ -1,0 +1,126 @@
+10:[data-theme="dark"] {
+46:[data-theme="light"] {
+82::root {
+92:*, *::before, *::after {
+98:html {
+103:body {
+116::root body::before {
+128:[data-theme="light"] body::before {
+134:#root {
+141:::-webkit-scrollbar { width: 6px; }
+142:::-webkit-scrollbar-track { background: transparent; }
+143:::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+144:::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+147:h1, h2, h3, h4 {
+154:.glass-card {
+163:.glass-card:hover {
+170:.btn {
+189:.btn svg {
+195:.btn-primary {
+200:.btn-primary:hover {
+205:.btn-primary:active { transform: translateY(0); }
+206:.btn-primary:disabled {
+212:.btn-ghost {
+217:.btn-ghost:hover {
+222:.btn-ghost:disabled {
+227:.btn-success {
+231:.btn-success:hover {
+235:.btn-success:disabled {
+241:.btn-danger {
+246:.btn-danger:hover {
+251:.theme-toggle {
+264:.theme-toggle:hover {
+271:.input-field {
+283:.input-field::placeholder { color: var(--text-muted); }
+284:.input-field:focus {
+290:.badge {
+300:.badge-positive { background: var(--accent-success-bg); color: var(--accent-success); }
+301:.badge-negative { background: var(--accent-danger-bg); color: var(--accent-danger); }
+302:.badge-edge { background: var(--accent-edge-bg); color: var(--accent-edge); }
+303:.badge-high { background: var(--accent-danger-bg); color: var(--accent-danger); }
+304:.badge-medium { background: var(--accent-warning-bg); color: var(--accent-warning); }
+305:.badge-low { background: var(--accent-success-bg); color: var(--accent-success); }
+308:.spinner {
+318:@keyframes spin {
+319:  to { transform: rotate(360deg); }
+323:.toast {
+340:.toast-success { border-left: 3px solid var(--accent-success); }
+341:.toast-error { border-left: 3px solid var(--accent-danger); }
+344:.stats-bar {
+351:.stat-chip {
+363:.stat-chip .stat-value {
+369:@media (max-width: 640px) {
+370:  .btn {
+375:  .btn .btn-label {
+378:  .btn svg {
+385:[data-amplify-authenticator] {
+403:.amplify-authenticator {
+413:.amplify-authenticator::before {
+423:.amplify-tabs { border-bottom: 1px solid var(--border-glass) !important; }
+424:.amplify-tabs-item[data-status="active"] { border-color: var(--accent-primary) !important; color: var(--accent-primary) !important; }
+425:.amplify-button[data-variation="primary"] { border: none !important; border-radius: var(--radius-sm) !important; font-weight: 700 !important; }
+426:.amplify-input { background: var(--bg-glass) !important; border-radius: var(--radius-sm) !important; color: var(--text-primary) !important; }
+428:.username-label {
+43:}
+79:}
+89:}
+96:}
+101:}
+112:}
+126:}
+132:}
+138:}
+141:::-webkit-scrollbar { width: 6px; }
+142:::-webkit-scrollbar-track { background: transparent; }
+143:::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+144:::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+151:}
+161:}
+167:}
+186:}
+193:}
+199:}
+204:}
+205:.btn-primary:active { transform: translateY(0); }
+210:}
+216:}
+221:}
+225:}
+230:}
+234:}
+239:}
+245:}
+248:}
+263:}
+268:}
+282:}
+283:.input-field::placeholder { color: var(--text-muted); }
+287:}
+299:}
+300:.badge-positive { background: var(--accent-success-bg); color: var(--accent-success); }
+301:.badge-negative { background: var(--accent-danger-bg); color: var(--accent-danger); }
+302:.badge-edge { background: var(--accent-edge-bg); color: var(--accent-edge); }
+303:.badge-high { background: var(--accent-danger-bg); color: var(--accent-danger); }
+304:.badge-medium { background: var(--accent-warning-bg); color: var(--accent-warning); }
+305:.badge-low { background: var(--accent-success-bg); color: var(--accent-success); }
+316:}
+319:  to { transform: rotate(360deg); }
+320:}
+339:}
+340:.toast-success { border-left: 3px solid var(--accent-success); }
+341:.toast-error { border-left: 3px solid var(--accent-danger); }
+349:}
+361:}
+366:}
+373:  }
+377:  }
+381:  }
+382:}
+401:}
+411:}
+421:}
+423:.amplify-tabs { border-bottom: 1px solid var(--border-glass) !important; }
+424:.amplify-tabs-item[data-status="active"] { border-color: var(--accent-primary) !important; color: var(--accent-primary) !important; }
+425:.amplify-button[data-variation="primary"] { border: none !important; border-radius: var(--radius-sm) !important; font-weight: 700 !important; }
+426:.amplify-input { background: var(--bg-glass) !important; border-radius: var(--radius-sm) !important; color: var(--text-primary) !important; }
+436:}
