@@ -122,17 +122,13 @@ npm run dev
 
 ---
 
-## 👤 About the Author
+## 👤 Author
 
-<div align="left">
-  <img src="https://github.com/RedSkull5143.png" width="100" height="100" style="border-radius: 50%" />
-  <br>
-  <b>Om Shinde</b><br>
-  <i>SDET & Automation Architect</i><br>
-  
-  [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/RedSkull5143)
-  [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/om-shinde-0a1b2c3d) 
-</div>
+**Om Shinde**  
+*SDET*
+
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/RedSkull5143) 
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/shindeom)
 
 ---
 
