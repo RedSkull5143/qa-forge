@@ -18,7 +18,10 @@ import {
   TriangleAlert,
   LogOut,
   Lock,
+  FileText
 } from 'lucide-react'
+
+import forgeHero from './assets/hero-forge.png'
 import './App.css'
 
 // ── Types ─────────────────────────────────────────────────
@@ -33,10 +36,8 @@ interface TestCase {
   priority: string
 }
 
-// ── API Base URL ──────────────────────────────────────────
 const API_BASE = 'http://localhost:8000'
 
-// ── Main App Component ────────────────────────────────────
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
@@ -71,54 +72,36 @@ function App() {
 
   useEffect(() => {
     checkAuth()
-
-    // Listen for auth events (critical for redirect flows)
     const unsubscribe = Hub.listen('auth', ({ payload }) => {
-      console.log('Auth Hub Event:', payload.event)
-      if (payload.event === 'signInWithRedirect' || payload.event === 'signedIn' || payload.event === 'tokenRefresh') {
-        // Essential Delay: Amplify fires the event a millisecond before tokens are actually saved to LocalStorage.
+      if (['signInWithRedirect', 'signedIn', 'tokenRefresh'].includes(payload.event)) {
         setTimeout(() => checkAuth(), 500)
       }
-      if (payload.event === 'signedOut' || payload.event === 'signInWithRedirect_failure') {
+      if (['signedOut', 'signInWithRedirect_failure'].includes(payload.event)) {
         setIsAuthenticated(false)
         setUserEmail(null)
       }
     })
-
     return unsubscribe
   }, [])
 
-  // ── Apply Theme ──────────────────────────────────────────
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('qa-forge-theme', theme)
   }, [theme])
 
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
-  }
-
-  // ── Get Auth Header Helper ──────────────────────────────
-  const getAuthHeader = async () => {
-    try {
-      const { tokens } = await fetchAuthSession();
-      if (tokens?.idToken) {
-        return { 'Authorization': `Bearer ${tokens.idToken.toString()}` };
-      }
-      return {};
-    } catch (err) {
-      console.error('Error fetching auth session:', err);
-      return {};
-    }
-  }
-
-  // ── Show Toast Notification ──────────────────────────────
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 4000)
   }
 
-  // ── Generate Test Cases via AI ───────────────────────────
+  const getAuthHeader = async () => {
+    try {
+      const { tokens } = await fetchAuthSession();
+      return tokens?.idToken ? { 'Authorization': `Bearer ${tokens.idToken.toString()}` } : {};
+    } catch { return {}; }
+  }
+
+  // ── Handlers ─────────────────────────────────────────────
   const handleGenerate = async () => {
     if (!ticketId.trim()) return
     setLoading(true)
@@ -133,21 +116,19 @@ function App() {
       })
       const data = await res.json()
 
-      if (data.error) {
-        showToast(data.error, 'error')
-      } else if (data.test_cases) {
+      if (data.error) showToast(data.error, 'error')
+      else if (data.test_cases) {
         setTestCases(data.test_cases)
         setSelectedCases(new Set(data.test_cases.map((tc: TestCase) => tc.id)))
-        showToast(`Generated ${data.test_cases.length} test cases!`, 'success')
+        showToast(`Forged ${data.test_cases.length} test cases successfully.`, 'success')
       }
     } catch {
-      showToast('Failed to connect to backend. Is the server running?', 'error')
+      showToast('Forge connection lost. Ensure the backend is active.', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  // ── Toggle Card Selection ────────────────────────────────
   const toggleSelect = (id: string) => {
     setSelectedCases(prev => {
       const next = new Set(prev)
@@ -157,7 +138,41 @@ function App() {
     })
   }
 
-  const toggleSelectAll = () => {
+  const handlePushSubtasks = async () => {
+    const selected = testCases.filter(tc => selectedCases.has(tc.id))
+    setSubtaskLoading(true)
+    try {
+      const authHeader = await getAuthHeader();
+      const res = await fetch(`${API_BASE}/api/push/${ticketId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ test_cases: selected }),
+      })
+      const data = await res.json()
+      if (data.error) showToast(data.error, 'error')
+      else showToast(`Pushed ${data.pushed} cases to Jira.`, 'success')
+    } catch { showToast('Push failed.', 'error') }
+    finally { setSubtaskLoading(false) }
+  }
+
+  const handlePushExcel = async () => {
+    const selected = testCases.filter(tc => selectedCases.has(tc.id))
+    setExcelLoading(true)
+    try {
+      const authHeader = await getAuthHeader();
+      const res = await fetch(`${API_BASE}/api/push-excel/${ticketId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ test_cases: selected }),
+      })
+      const data = await res.json()
+      if (data.error) showToast(data.error, 'error')
+      else showToast(`Pushed Excel to Jira successfully.`, 'success')
+    } catch { showToast('Excel push failed.', 'error') }
+    finally { setExcelLoading(false) }
+  }
+
+  const handleSelectAll = () => {
     if (selectedCases.size === testCases.length) {
       setSelectedCases(new Set())
     } else {
@@ -165,71 +180,7 @@ function App() {
     }
   }
 
-  // ── Push to Jira as Sub-tasks ────────────────────────────
-  const handlePushSubtasks = async () => {
-    const selected = testCases.filter(tc => selectedCases.has(tc.id))
-    if (selected.length === 0) {
-      showToast('Select at least one test case to push', 'error')
-      return
-    }
-
-    setSubtaskLoading(true)
-    try {
-      const authHeader = await getAuthHeader();
-      const res = await fetch(`${API_BASE}/api/push/${ticketId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeader
-        },
-        body: JSON.stringify({ test_cases: selected }),
-      })
-      const data = await res.json()
-
-      if (data.error) {
-        showToast(data.error, 'error')
-      } else {
-        showToast(`Pushed ${data.pushed} sub-tasks to Jira!`, 'success')
-      }
-    } catch {
-      showToast('Failed to push to Jira', 'error')
-    } finally {
-      setSubtaskLoading(false)
-    }
-  }
-
-  // ── Push to Jira as Excel Attachment ─────────────────────
-  const handlePushExcel = async () => {
-    const selected = testCases.filter(tc => selectedCases.has(tc.id))
-    if (selected.length === 0) {
-      showToast('Select at least one test case to push', 'error')
-      return
-    }
-
-    setExcelLoading(true)
-    try {
-      const authHeader = await getAuthHeader();
-      const res = await fetch(`${API_BASE}/api/push-excel/${ticketId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeader
-        },
-        body: JSON.stringify({ test_cases: selected }),
-      })
-      const data = await res.json()
-
-      if (data.error) {
-        showToast(data.error, 'error')
-      } else {
-        showToast('Excel attached to Jira ticket!', 'success')
-      }
-    } catch {
-      showToast('Failed to push Excel to Jira', 'error')
-    } finally {
-      setExcelLoading(false)
-    }
-  }
+  const toggleSelectAll = handleSelectAll
 
   // ── Badge Helpers ────────────────────────────────────────
   const getTypeBadgeClass = (type: string) => {
@@ -250,12 +201,11 @@ function App() {
     }
   }
 
-  // ── Render Helpers ────────────────────────────────────────
+  // ── UI States ────────────────────────────────────────────
   if (isAuthLoading) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner" />
-        <p style={{ marginTop: '20px', color: 'var(--text-secondary)' }}>Decrypting Enterprise Session...</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+        <div className="forge-spinner" style={{ width: '40px', height: '40px' }} />
       </div>
     )
   }
@@ -263,32 +213,42 @@ function App() {
   if (!isAuthenticated) {
     return (
       <div className="landing-page">
-        <motion.div
-          className="landing-card glass-card"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="logo-icon large">
-            <FlaskConical size={40} />
-          </div>
-          <h1>Welcome to QA Forge</h1>
-          <p>Enterprise-grade AI manual test case generator for Jira.</p>
-          <button
-            className="btn btn-primary large-btn"
-            onClick={() => signInWithRedirect()}
-          >
-            <Lock size={18} />
-            Connect to Enterprise Auth
-          </button>
-        </motion.div>
+        <div className="landing-content">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+              <div className="landing-logo-icon">
+                <FlaskConical size={26} />
+              </div>
+              <h1 className="landing-title">QA Forge</h1>
+            </div>
+            <h2 className="landing-subtitle">
+              Stop writing test cases by hand.<br />
+              Paste a Jira ticket, get <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>production-ready test cases</span> in seconds.
+            </h2>
+            <p className="landing-desc">
+              Built for QA engineers who'd rather spend time breaking things than documenting how to break them.
+            </p>
+            <button
+              className="forge-btn forge-btn-primary"
+              style={{ padding: '16px 40px', fontSize: '1rem', width: 'fit-content', marginTop: '8px' }}
+              onClick={() => signInWithRedirect()}
+            >
+              <Lock size={18} />
+              Sign in with SSO
+            </button>
+          </motion.div>
+        </div>
+        <div className="landing-hero">
+          <img src={forgeHero} alt="QA Forge dashboard preview" className="landing-hero-img" />
+          <div className="landing-hero-overlay" />
+        </div>
       </div>
     )
   }
 
-  // ── Main Dashboard ────────────────────────────────────────
-  const positiveCount = testCases.filter(tc => tc.type.toLowerCase() === 'positive').length
-  const negativeCount = testCases.filter(tc => tc.type.toLowerCase() === 'negative').length
-  const edgeCount = testCases.filter(tc => tc.type.toLowerCase() === 'edge').length
+  const positiveCount = testCases.filter(t => t.type.toLowerCase() === 'positive').length
+  const negativeCount = testCases.filter(t => t.type.toLowerCase() === 'negative').length
+  const edgeCount = testCases.filter(t => t.type.toLowerCase() === 'edge').length
 
   return (
     <div className="app-shell">
@@ -309,7 +269,7 @@ function App() {
           </div>
           <button
             className="theme-toggle"
-            onClick={toggleTheme}
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -370,8 +330,8 @@ function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <div className="loading-spinner" />
-            <p>Analyzing ticket and generating test cases...</p>
+            <div className="spinner" style={{ width: '32px', height: '32px' }} />
+            <p style={{ marginTop: '16px' }}>Analyzing ticket and generating test cases...</p>
           </motion.div>
         )}
 

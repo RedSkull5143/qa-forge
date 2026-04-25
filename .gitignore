@@ -1,4 +1,43 @@
+# Dependencies
+node_modules/
 backend/venv/
-.DS_Store
-.env
+.venv/
+env/
+venv/
+ENV/
+
+# Python Cache
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build & Dist
+dist/
+build/
+dist-ssr/
+*.local
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Backups & Scrap
+*_backup.*
+old_*.*
+temp_*.*
+DEVELOPMENT_LOG.md
+QA_FORGE_AI_CONTEXT.md
